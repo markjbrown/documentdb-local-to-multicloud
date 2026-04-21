@@ -1,0 +1,10 @@
+groups:
+  - name: documentdb.rules
+    rules:
+      - alert: HighQueryLatency
+        expr: documentdb_query_duration_seconds > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High query latency detected

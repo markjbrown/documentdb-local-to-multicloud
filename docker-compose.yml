@@ -1,0 +1,47 @@
+services:
+  documentdb:
+    image: ghcr.io/documentdb/documentdb/documentdb-local:latest
+    container_name: documentdb-local
+    environment:
+      USERNAME: demo
+      PASSWORD: demo
+      SKIP_INIT_DATA: "true"
+    ports:
+      - "27017:10260"
+    restart: unless-stopped
+
+  seed-restaurants:
+    build:
+      context: ./docker/seed
+    depends_on:
+      - documentdb
+    environment:
+      # Use the container-to-container endpoint/port (not the host-mapped port)
+      MONGODB_URI: mongodb://demo:demo@documentdb:10260/?tls=true&tlsAllowInvalidCertificates=true
+      MONGODB_DB: foodservice
+      MONGODB_COLLECTION: restaurants
+      DATA_FILE: /data/restaurants.json
+      SEED_ONLY_IF_EMPTY: "true"
+      DROP_COLLECTION: "false"
+      BATCH_SIZE: "1000"
+    volumes:
+      - ./data:/data:ro
+    restart: "no"
+
+  seed-restaurants-vectors:
+    build:
+      context: ./docker/seed
+    depends_on:
+      - documentdb
+    environment:
+      # Use the container-to-container endpoint/port (not the host-mapped port)
+      MONGODB_URI: mongodb://demo:demo@documentdb:10260/?tls=true&tlsAllowInvalidCertificates=true
+      MONGODB_DB: foodservice
+      MONGODB_COLLECTION: restaurants_vectors
+      DATA_FILE: /data/restaurants_vectors.json
+      SEED_ONLY_IF_EMPTY: "true"
+      DROP_COLLECTION: "false"
+      BATCH_SIZE: "500"
+    volumes:
+      - ./data:/data:ro
+    restart: "no"

@@ -35,44 +35,50 @@ Complete setup instructions for the "From Localhost to Multi-Cloud" demo environ
 git clone https://github.com/AzureCosmosDB/documentdb-local-to-multicloud.git
 cd documentdb-local-to-multicloud
 
-# 2. Pull and start DocumentDB locally
-docker pull ghcr.io/documentdb/documentdb/documentdb-local:latest
-docker run -dt -p 10260:10260 --name docdb \
-  ghcr.io/documentdb/documentdb/documentdb-local:latest \
-  --username demo --password test
+# 2. Start DocumentDB + auto-load sample data (one command)
+docker compose up -d
 
-# 3. Verify it's running
-docker ps
+# 3. Verify it's running (wait ~30s for seed containers to finish)
+docker compose ps
 mongosh "mongodb://demo:test@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true" --eval "db.runCommand({ping:1})"
 
-# 4. Load data + create indexes
-bash data/load-data.sh
+# 4. Install Python dependencies
+pip install -r requirements.txt
 
-# 5. (Optional) Wipe indexes for Index Advisor demo
+# 5. (Data is auto-loaded by docker compose — 20K restaurants + vectors)
+# Verify:
+mongosh "mongodb://demo:demo@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true" --eval "use('foodservice'); db.restaurants.countDocuments()"
+
+# 6. (Optional) Wipe indexes for Index Advisor demo
 bash data/wipe-data.sh --indexes
 
-# 6. (Optional) Wipe everything for full live demo
+# 7. (Optional) Wipe everything for full live demo
 bash data/wipe-data.sh --all
 ```
 
-**Connection string:** `mongodb://demo:test@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true`
+**Connection string:** `mongodb://demo:demo@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true`
+
+> **Note:** docker-compose maps port 27017 (standard MongoDB port) externally to 10260 internally. The docdbdemo scripts use port 27017.
+
+### Phase 1b: Run Demo Scripts
+
+```bash
+# Index Advisor demo (interactive menu)
+python scripts/query_examples.py
+
+# Vector search demo
+python scripts/vector_restaurants_demo.py --query "romantic Italian dinner" --mode compact --k 10
+```
 
 ### Phase 2: VS Code Extension Setup
 
 1. Install **DocumentDB for VS Code** extension
 2. Click the DocumentDB icon in the sidebar
 3. Click **+ New Connection**
-4. Paste: `mongodb://demo:test@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true&authMechanism=SCRAM-SHA-256`
+4. Paste: `mongodb://demo:demo@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true&authMechanism=SCRAM-SHA-256`
 5. Test connection
 
-### Phase 3: OpenAI API Key (for vector search demo)
-
-```bash
-# Create .env file
-echo "OPENAI_API_KEY=sk-your-key-here" > .env
-```
-
-### Phase 4: Deploy to AKS (Azure)
+### Phase 3: Deploy to AKS (Azure)
 
 ```bash
 # Login to Azure
@@ -94,7 +100,7 @@ This will:
 **Estimated time:** 15-20 minutes
 **Estimated cost:** ~$17/day ($512/month) while running
 
-### Phase 5: Deploy to EKS (AWS)
+### Phase 4: Deploy to EKS (AWS)
 
 ```bash
 # Configure AWS CLI
@@ -115,7 +121,7 @@ This will:
 **Estimated time:** 20-25 minutes
 **Estimated cost:** ~$5-8/day ($140-230/month) while running
 
-### Phase 6: Multi-Cloud (both clusters)
+### Phase 5: Multi-Cloud (both clusters)
 
 Use `infra/scripts/start.sh` → option 3 to verify both clusters are running, or deploy individually using Phases 4 and 5.
 
