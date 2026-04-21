@@ -10,14 +10,13 @@ Complete setup instructions for the "From Localhost to Multi-Cloud" demo environ
 | --- | --- | --- |
 | Docker Desktop | Local DocumentDB | [docker.com](https://www.docker.com/) |
 | VS Code | IDE + DocumentDB extension | [code.visualstudio.com](https://code.visualstudio.com/) |
-| DocumentDB for VS Code | DB explorer, query editor, Index Advisor | [Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-documentdb.vscode-documentdb) |
+| DocumentDB for VS Code | DB explorer, query editor, Index Advisor | [Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-documentdb) |
 | mongosh | MongoDB shell | [mongodb.com](https://www.mongodb.com/try/download/shell) |
 | Azure CLI | AKS deployment | [Install](https://learn.microsoft.com/cli/azure/install-azure-cli) |
 | AWS CLI | EKS deployment | [Install](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) |
 | eksctl | EKS cluster management | [eksctl.io](https://eksctl.io/) |
 | kubectl | Kubernetes CLI | [Install](https://kubernetes.io/docs/tasks/tools/) |
 | Helm | K8s package manager | [helm.sh](https://helm.sh/docs/intro/install/) |
-| OpenAI API key | Vector search embeddings | [platform.openai.com](https://platform.openai.com/api-keys) |
 
 ### Cloud Accounts
 

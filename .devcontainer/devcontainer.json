@@ -15,7 +15,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-documentdb.vscode-documentdb",
+        "ms-azuretools.vscode-documentdb",
         "ms-python.python",
         "ms-azuretools.vscode-docker"
       ]
