@@ -5,6 +5,7 @@ set -euo pipefail
 CLUSTER_NAME="${EKS_CLUSTER_NAME:-docdb-demo-eks}"
 REGION="${EKS_REGION:-us-west-2}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo "=== Deploying EKS cluster ==="
 echo "Cluster: $CLUSTER_NAME"
@@ -83,5 +84,32 @@ echo ""
 echo "=== EKS deployment complete ==="
 echo "Password: $DOCDB_PASSWORD"
 echo ""
-echo "Wait for NLB (2-5 min):"
-echo "  kubectl get svc -n documentdb-ns -w"
+echo "Waiting for NLB hostname (2-5 min)..."
+for i in {1..60}; do
+  NLB_HOST=$(kubectl get svc -n documentdb-ns -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+  if [ -n "$NLB_HOST" ] && [ "$NLB_HOST" != "null" ]; then
+    echo "NLB hostname: $NLB_HOST"
+    break
+  fi
+  echo "  Waiting... ($i/60)"
+  sleep 10
+done
+
+if [ -n "$NLB_HOST" ] && [ "$NLB_HOST" != "null" ]; then
+  EKS_URI="mongodb://docdb:${DOCDB_PASSWORD}@${NLB_HOST}:10260/?tls=true&tlsAllowInvalidCertificates=true&authMechanism=SCRAM-SHA-256"
+
+  echo ""
+  echo "=== Loading demo data ==="
+  MONGODB_URI="$EKS_URI" bash "$REPO_ROOT/data/load-data.sh"
+
+  echo ""
+  echo "=== Wiping data (ready for live demo) ==="
+  MONGODB_URI="$EKS_URI" bash "$REPO_ROOT/data/wipe-data.sh"
+
+  echo ""
+  echo "Connect:"
+  echo "  mongosh \"$EKS_URI\""
+else
+  echo "⚠️  NLB not ready. Load data manually after hostname is assigned."
+  echo "  MONGODB_URI=\"mongodb://docdb:\$PASSWORD@<HOST>:10260/...\" bash data/load-data.sh"
+fi

@@ -2,6 +2,7 @@
 # Deploy AKS cluster for DocumentDB demo
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 RESOURCE_GROUP="${RESOURCE_GROUP:-docdb-demo-rg}"
 LOCATION="${LOCATION:-eastus2}"
 CLUSTER_NAME="${CLUSTER_NAME:-docdb-demo-aks}"
@@ -74,8 +75,32 @@ echo ""
 echo "=== AKS deployment complete ==="
 echo "Password: $DOCDB_PASSWORD"
 echo ""
-echo "Wait for LoadBalancer IP:"
-echo "  kubectl get svc -n documentdb-ns -w"
-echo ""
-echo "Connect:"
-echo "  mongosh \"mongodb://docdb:\$PASSWORD@<EXTERNAL-IP>:10260/?tls=true&tlsAllowInvalidCertificates=true&authMechanism=SCRAM-SHA-256\""
+echo "Waiting for LoadBalancer IP..."
+for i in {1..60}; do
+  EXTERNAL_IP=$(kubectl get svc -n documentdb-ns -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+  if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+    echo "LoadBalancer IP: $EXTERNAL_IP"
+    break
+  fi
+  echo "  Waiting... ($i/60)"
+  sleep 10
+done
+
+if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+  AKS_URI="mongodb://docdb:${DOCDB_PASSWORD}@${EXTERNAL_IP}:10260/?tls=true&tlsAllowInvalidCertificates=true&authMechanism=SCRAM-SHA-256"
+
+  echo ""
+  echo "=== Loading demo data ==="
+  MONGODB_URI="$AKS_URI" bash "$REPO_ROOT/data/load-data.sh"
+
+  echo ""
+  echo "=== Wiping data (ready for live demo) ==="
+  MONGODB_URI="$AKS_URI" bash "$REPO_ROOT/data/wipe-data.sh"
+
+  echo ""
+  echo "Connect:"
+  echo "  mongosh \"$AKS_URI\""
+else
+  echo "⚠️  LoadBalancer IP not ready. Load data manually after IP is assigned."
+  echo "  MONGODB_URI=\"mongodb://docdb:\$PASSWORD@<IP>:10260/...\" bash data/load-data.sh"
+fi
