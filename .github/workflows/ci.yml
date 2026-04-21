@@ -1,0 +1,115 @@
+name: CI - Test with DocumentDB
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      documentdb:
+        image: ghcr.io/documentdb/documentdb/documentdb-local:latest
+        ports:
+          - 10260:10260
+        options: >-
+          --health-cmd "mongosh 'mongodb://ci_user:ci_password@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true' --eval 'db.runCommand({ping:1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        env:
+          USERNAME: ci_user
+          PASSWORD: ci_password
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pymongo python-dotenv
+
+      - name: Wait for DocumentDB
+        run: |
+          echo "Waiting for DocumentDB to be ready..."
+          for i in {1..30}; do
+            if mongosh "mongodb://ci_user:ci_password@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true" --eval "db.runCommand({ping:1})" 2>/dev/null; then
+              echo "DocumentDB is ready!"
+              break
+            fi
+            echo "Attempt $i/30..."
+            sleep 5
+          done
+
+      - name: Import test data
+        run: |
+          python -c "
+          from pymongo import MongoClient
+          import json
+
+          client = MongoClient('mongodb://ci_user:ci_password@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true')
+          db = client['testdb']
+
+          # Import sample data if it exists
+          import os
+          data_file = 'data/sample_data.json'
+          if os.path.exists(data_file):
+              with open(data_file) as f:
+                  docs = json.load(f)
+              if docs:
+                  db.listings.insert_many(docs[:100])  # Import first 100 for CI
+                  print(f'Imported {min(len(docs), 100)} documents')
+          else:
+              # Insert minimal test data
+              db.listings.insert_many([
+                  {'name': 'Test Listing 1', 'price': 100, 'bedrooms': 2},
+                  {'name': 'Test Listing 2', 'price': 200, 'bedrooms': 3},
+              ])
+              print('Inserted minimal test data')
+
+          print(f'Collection count: {db.listings.count_documents({})}')
+          client.close()
+          "
+
+      - name: Run tests
+        env:
+          MONGODB_URI: "mongodb://ci_user:ci_password@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true"
+        run: |
+          python -c "
+          from pymongo import MongoClient
+          import os
+
+          uri = os.getenv('MONGODB_URI')
+          client = MongoClient(uri)
+          db = client['testdb']
+
+          # Test 1: Connection
+          result = db.command('ping')
+          assert result.get('ok') == 1.0, 'Ping failed'
+          print('✅ Connection test passed')
+
+          # Test 2: CRUD operations
+          db.test_col.insert_one({'key': 'value'})
+          doc = db.test_col.find_one({'key': 'value'})
+          assert doc is not None, 'Insert/find failed'
+          db.test_col.delete_one({'key': 'value'})
+          print('✅ CRUD test passed')
+
+          # Test 3: Aggregation
+          pipeline = [
+              {'\$group': {'_id': None, 'count': {'\$sum': 1}}}
+          ]
+          result = list(db.listings.aggregate(pipeline))
+          assert len(result) > 0, 'Aggregation failed'
+          print(f'✅ Aggregation test passed ({result[0][\"count\"]} documents)')
+
+          client.close()
+          print('✅ All tests passed')
+          "

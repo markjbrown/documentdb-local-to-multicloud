@@ -1,0 +1,30 @@
+{
+  "name": "DocumentDB Local to Multi-Cloud",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" },
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "helm": "latest",
+      "kubectl": "latest",
+      "minikube": "none"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-documentdb.vscode-documentdb",
+        "ms-python.python",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "forwardPorts": [10260, 8000, 3000],
+  "portsAttributes": {
+    "10260": { "label": "DocumentDB", "onAutoForward": "notify" },
+    "8000": { "label": "Backend API", "onAutoForward": "notify" },
+    "3000": { "label": "Frontend", "onAutoForward": "notify" }
+  }
+}

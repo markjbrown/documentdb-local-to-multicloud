@@ -1,0 +1,23 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: docdb-demo-eks
+  region: us-west-2
+  version: "1.31"
+
+managedNodeGroups:
+  - name: default
+    instanceType: m5.large
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 3
+    volumeSize: 50
+    iam:
+      withAddonPolicies:
+        ebs: true
+
+addons:
+  - name: aws-ebs-csi-driver
+    wellKnownPolicies:
+      ebsCSIController: true
