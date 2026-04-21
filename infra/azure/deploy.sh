@@ -94,8 +94,8 @@ if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
   MONGODB_URI="$AKS_URI" bash "$REPO_ROOT/data/load-data.sh"
 
   echo ""
-  echo "=== Wiping data (ready for live demo) ==="
-  MONGODB_URI="$AKS_URI" bash "$REPO_ROOT/data/wipe-data.sh"
+  echo "=== Wiping indexes (ready for Index Advisor demo) ==="
+  MONGODB_URI="$AKS_URI" bash "$REPO_ROOT/data/wipe-data.sh" --indexes
 
   echo ""
   echo "Connect:"

@@ -103,8 +103,8 @@ if [ -n "$NLB_HOST" ] && [ "$NLB_HOST" != "null" ]; then
   MONGODB_URI="$EKS_URI" bash "$REPO_ROOT/data/load-data.sh"
 
   echo ""
-  echo "=== Wiping data (ready for live demo) ==="
-  MONGODB_URI="$EKS_URI" bash "$REPO_ROOT/data/wipe-data.sh"
+  echo "=== Wiping indexes (ready for Index Advisor demo) ==="
+  MONGODB_URI="$EKS_URI" bash "$REPO_ROOT/data/wipe-data.sh" --indexes
 
   echo ""
   echo "Connect:"
