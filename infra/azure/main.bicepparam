@@ -8,3 +8,4 @@ param nodeCount = 2
 param enableAutoScaling = true
 param minNodeCount = 1
 param maxNodeCount = 3
+param ownerEmail = ''

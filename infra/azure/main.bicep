@@ -25,10 +25,17 @@ param minNodeCount int = 1
 @maxValue(5)
 param maxNodeCount int = 3
 
+@description('Owner email for resource tagging')
+param ownerEmail string
+
 // AKS Cluster
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   name: clusterName
   location: location
+  tags: {
+    owner: ownerEmail
+    project: 'documentdb-local-to-multicloud'
+  }
   identity: {
     type: 'SystemAssigned'
   }

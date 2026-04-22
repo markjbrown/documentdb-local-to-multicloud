@@ -7,12 +7,17 @@ REGION="${EKS_REGION:-us-west-2}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Get owner identity for tagging
+OWNER=$(aws sts get-caller-identity --query Arn --output text 2>/dev/null | sed 's|.*/||' || echo "unknown")
+echo "Owner: $OWNER"
+
 echo "=== Deploying EKS cluster ==="
 echo "Cluster: $CLUSTER_NAME"
 echo "Region: $REGION"
 
-# Create EKS cluster using eksctl
-eksctl create cluster -f "$SCRIPT_DIR/cluster-config.yaml"
+# Create EKS cluster using eksctl with tags
+eksctl create cluster -f "$SCRIPT_DIR/cluster-config.yaml" \
+  --tags "owner=$OWNER,project=documentdb-local-to-multicloud"
 
 # Update kubeconfig
 aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION"

@@ -7,20 +7,24 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-docdb-demo-rg}"
 LOCATION="${LOCATION:-eastus2}"
 CLUSTER_NAME="${CLUSTER_NAME:-docdb-demo-aks}"
 
+# Get owner email from signed-in user
+OWNER_EMAIL=$(az ad signed-in-user show --query userPrincipalName -o tsv 2>/dev/null || echo "unknown")
+echo "Owner: $OWNER_EMAIL"
+
 echo "=== Deploying AKS cluster ==="
 echo "Resource Group: $RESOURCE_GROUP"
 echo "Location: $LOCATION"
 echo "Cluster: $CLUSTER_NAME"
 
-# Create resource group
-az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --output none
+# Create resource group with owner tag
+az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --tags owner="$OWNER_EMAIL" project=documentdb-local-to-multicloud --output none
 
 # Deploy Bicep template
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file "$(dirname "$0")/main.bicep" \
   --parameters "$(dirname "$0")/main.bicepparam" \
-  --parameters clusterName="$CLUSTER_NAME" location="$LOCATION" \
+  --parameters clusterName="$CLUSTER_NAME" location="$LOCATION" ownerEmail="$OWNER_EMAIL" \
   --output none
 
 # Get credentials
