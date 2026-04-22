@@ -41,7 +41,15 @@ docker compose up -d
 docker compose ps
 mongosh "mongodb://demo:demo@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true" --eval "db.runCommand({ping:1})"
 
-# 4. Install Python dependencies
+# 4. Create Python virtual environment and install dependencies
+python -m venv .venv
+
+# Activate (Windows PowerShell)
+.\.venv\Scripts\Activate.ps1
+
+# Activate (macOS/Linux)
+# source .venv/bin/activate
+
 pip install -r requirements.txt
 
 # 5. (Data is auto-loaded by docker compose — 20K restaurants + vectors)
