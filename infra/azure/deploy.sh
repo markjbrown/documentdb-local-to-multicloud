@@ -2,8 +2,34 @@
 # Deploy AKS cluster for DocumentDB demo
 set -euo pipefail
 
-# Ensure Windows tools (helm, kubectl, mongosh) are on PATH in Git Bash
-export PATH="$PATH:/c/ProgramData/chocolatey/bin:/c/Program Files/Docker/Docker/resources/bin:$HOME/tools"
+# --- Cross-platform tool discovery ---
+# On Windows (Git Bash/WSL), tools installed via Chocolatey, scoop, msi, etc.
+# may not be on PATH. Search common locations.
+if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(uname -s)" == *CYGWIN* ]]; then
+  EXTRA_PATHS=(
+    "/c/ProgramData/chocolatey/bin"
+    "/c/Program Files/Docker/Docker/resources/bin"
+    "/c/Program Files/Amazon/AWSCLIV2"
+    "/c/Program Files/Microsoft SDKs/Azure/CLI2/wbin"
+    "$HOME/tools"
+    "$HOME/bin"
+    "$HOME/scoop/shims"
+    "$HOME/AppData/Local/Programs/mongosh"
+  )
+  for p in "${EXTRA_PATHS[@]}"; do
+    [[ -d "$p" ]] && export PATH="$PATH:$p"
+  done
+fi
+
+# Verify required tools
+for cmd in az kubectl helm mongosh; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "\u274c Required tool not found: $cmd"
+    echo "   Install it and ensure it's on your PATH."
+    echo "   See SETUP.md for installation links."
+    exit 1
+  fi
+done
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 RESOURCE_GROUP="${RESOURCE_GROUP:-docdb-demo-rg}"

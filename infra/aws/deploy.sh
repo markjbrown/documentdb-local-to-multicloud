@@ -2,8 +2,31 @@
 # Deploy EKS cluster for DocumentDB demo
 set -euo pipefail
 
-# Ensure Windows tools are on PATH in Git Bash
-export PATH="$PATH:/c/ProgramData/chocolatey/bin:/c/Program Files/Docker/Docker/resources/bin:/c/Program Files/Amazon/AWSCLIV2:$HOME/tools"
+# --- Cross-platform tool discovery ---
+if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(uname -s)" == *CYGWIN* ]]; then
+  EXTRA_PATHS=(
+    "/c/ProgramData/chocolatey/bin"
+    "/c/Program Files/Docker/Docker/resources/bin"
+    "/c/Program Files/Amazon/AWSCLIV2"
+    "$HOME/tools"
+    "$HOME/bin"
+    "$HOME/scoop/shims"
+    "$HOME/AppData/Local/Programs/mongosh"
+  )
+  for p in "${EXTRA_PATHS[@]}"; do
+    [[ -d "$p" ]] && export PATH="$PATH:$p"
+  done
+fi
+
+# Verify required tools
+for cmd in aws kubectl helm eksctl mongosh; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "\u274c Required tool not found: $cmd"
+    echo "   Install it and ensure it's on your PATH."
+    echo "   See SETUP.md for installation links."
+    exit 1
+  fi
+done
 
 CLUSTER_NAME="${EKS_CLUSTER_NAME:-docdb-demo-eks}"
 REGION="${EKS_REGION:-us-west-2}"
