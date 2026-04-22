@@ -24,13 +24,22 @@ if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(unam
   done
 fi
 
-# Verify required tools
+# Verify required tools (check both 'cmd' and 'cmd.exe' for WSL compatibility)
 for cmd in az kubectl helm; do
-  if ! command -v "$cmd" &>/dev/null; then
-    echo "\u274c Required tool not found: $cmd"
-    echo "   Install it and ensure it's on your PATH."
+  if ! command -v "$cmd" &>/dev/null && ! command -v "${cmd}.exe" &>/dev/null; then
+    echo "ERROR: Required tool not found: $cmd"
+    echo "   Install it and ensure it is on your PATH."
     echo "   See SETUP.md for installation links."
     exit 1
+  fi
+done
+echo "All required tools found."
+
+# WSL shim: if 'helm' isn't found but 'helm.exe' is, create aliases
+for cmd in az kubectl helm mongosh; do
+  if ! command -v "$cmd" &>/dev/null && command -v "${cmd}.exe" &>/dev/null; then
+    eval "function $cmd() { ${cmd}.exe \"\$@\"; }"
+    export -f "$cmd" 2>/dev/null || true
   fi
 done
 
