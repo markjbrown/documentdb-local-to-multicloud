@@ -3,23 +3,25 @@
 set -euo pipefail
 
 # --- Cross-platform tool discovery ---
-if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(uname -s)" == *CYGWIN* ]]; then
-  EXTRA_PATHS=(
-    "/c/ProgramData/chocolatey/bin"
-    "/c/Program Files/Docker/Docker/resources/bin"
-    "/c/Program Files/Amazon/AWSCLIV2"
-    "$HOME/tools"
-    "$HOME/bin"
-    "$HOME/scoop/shims"
-    "$HOME/AppData/Local/Programs/mongosh"
+if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(uname -s)" == *CYGWIN* ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+  WIN_ROOTS=("/c" "/mnt/c")
+  WIN_DIRS=(
+    "ProgramData/chocolatey/bin"
+    "Program Files/Docker/Docker/resources/bin"
+    "Program Files/Amazon/AWSCLIV2"
   )
-  for p in "${EXTRA_PATHS[@]}"; do
+  for root in "${WIN_ROOTS[@]}"; do
+    for dir in "${WIN_DIRS[@]}"; do
+      [[ -d "$root/$dir" ]] && export PATH="$PATH:$root/$dir"
+    done
+  done
+  for p in "$HOME/tools" "$HOME/bin" "$HOME/scoop/shims"; do
     [[ -d "$p" ]] && export PATH="$PATH:$p"
   done
 fi
 
 # Verify required tools
-for cmd in aws kubectl helm eksctl mongosh; do
+for cmd in aws kubectl helm eksctl; do
   if ! command -v "$cmd" &>/dev/null; then
     echo "\u274c Required tool not found: $cmd"
     echo "   Install it and ensure it's on your PATH."

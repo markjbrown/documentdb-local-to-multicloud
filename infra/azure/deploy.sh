@@ -3,26 +3,29 @@
 set -euo pipefail
 
 # --- Cross-platform tool discovery ---
-# On Windows (Git Bash/WSL), tools installed via Chocolatey, scoop, msi, etc.
-# may not be on PATH. Search common locations.
-if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(uname -s)" == *CYGWIN* ]]; then
-  EXTRA_PATHS=(
-    "/c/ProgramData/chocolatey/bin"
-    "/c/Program Files/Docker/Docker/resources/bin"
-    "/c/Program Files/Amazon/AWSCLIV2"
-    "/c/Program Files/Microsoft SDKs/Azure/CLI2/wbin"
-    "$HOME/tools"
-    "$HOME/bin"
-    "$HOME/scoop/shims"
-    "$HOME/AppData/Local/Programs/mongosh"
+# On Windows (Git Bash, WSL, MSYS), tools may not be on PATH.
+# Search common locations with both /c/ and /mnt/c/ prefixes.
+if [[ "$(uname -s)" == *MINGW* ]] || [[ "$(uname -s)" == *MSYS* ]] || [[ "$(uname -s)" == *CYGWIN* ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+  WIN_ROOTS=("/c" "/mnt/c")
+  WIN_DIRS=(
+    "ProgramData/chocolatey/bin"
+    "Program Files/Docker/Docker/resources/bin"
+    "Program Files/Amazon/AWSCLIV2"
+    "Program Files/Microsoft SDKs/Azure/CLI2/wbin"
   )
-  for p in "${EXTRA_PATHS[@]}"; do
+  for root in "${WIN_ROOTS[@]}"; do
+    for dir in "${WIN_DIRS[@]}"; do
+      [[ -d "$root/$dir" ]] && export PATH="$PATH:$root/$dir"
+    done
+  done
+  # User-local paths
+  for p in "$HOME/tools" "$HOME/bin" "$HOME/scoop/shims" "$HOME/AppData/Local/Programs/mongosh"; do
     [[ -d "$p" ]] && export PATH="$PATH:$p"
   done
 fi
 
 # Verify required tools
-for cmd in az kubectl helm mongosh; do
+for cmd in az kubectl helm; do
   if ! command -v "$cmd" &>/dev/null; then
     echo "\u274c Required tool not found: $cmd"
     echo "   Install it and ensure it's on your PATH."
