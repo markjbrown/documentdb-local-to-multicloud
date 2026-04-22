@@ -2,6 +2,9 @@
 # Deploy EKS cluster for DocumentDB demo
 set -euo pipefail
 
+# Ensure Windows tools are on PATH in Git Bash
+export PATH="$PATH:/c/ProgramData/chocolatey/bin:/c/Program Files/Docker/Docker/resources/bin:/c/Program Files/Amazon/AWSCLIV2:$HOME/tools"
+
 CLUSTER_NAME="${EKS_CLUSTER_NAME:-docdb-demo-eks}"
 REGION="${EKS_REGION:-us-west-2}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

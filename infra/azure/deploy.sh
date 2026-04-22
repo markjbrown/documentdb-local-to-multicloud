@@ -2,6 +2,9 @@
 # Deploy AKS cluster for DocumentDB demo
 set -euo pipefail
 
+# Ensure Windows tools (helm, kubectl, mongosh) are on PATH in Git Bash
+export PATH="$PATH:/c/ProgramData/chocolatey/bin:/c/Program Files/Docker/Docker/resources/bin:$HOME/tools"
+
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 RESOURCE_GROUP="${RESOURCE_GROUP:-docdb-demo-rg}"
 LOCATION="${LOCATION:-eastus2}"
