@@ -59,16 +59,6 @@ bash data/wipe-data.sh --all
 
 > **Note:** docker-compose maps port 27017 (standard MongoDB port) externally to 10260 internally. The docdbdemo scripts use port 27017.
 
-### Phase 1b: Run Demo Scripts
-
-```bash
-# Index Advisor demo (interactive menu)
-python scripts/query_examples.py
-
-# Vector search demo
-python scripts/vector_restaurants_demo.py --query "romantic Italian dinner" --mode compact --k 10
-```
-
 ### Phase 2: VS Code Extension Setup
 
 1. Install **DocumentDB for VS Code** extension
@@ -76,6 +66,16 @@ python scripts/vector_restaurants_demo.py --query "romantic Italian dinner" --mo
 3. Click **+ New Connection**
 4. Paste: `mongodb://demo:demo@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true&authMechanism=SCRAM-SHA-256`
 5. Test connection
+
+### Phase 2b: Test Demo Scripts
+
+```bash
+# Index Advisor demo (interactive menu — shows COLLSCAN → IXSCAN transitions)
+python scripts/query_examples.py
+
+# Vector search demo (uses fake embeddings — no API key needed)
+python scripts/vector_restaurants_demo.py --query "romantic Italian dinner" --mode compact --k 10
+```
 
 ### Phase 3: Deploy to AKS (Azure)
 
