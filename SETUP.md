@@ -39,7 +39,7 @@ docker compose up -d
 
 # 3. Verify it's running (wait ~30s for seed containers to finish)
 docker compose ps
-mongosh "mongodb://demo:test@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true" --eval "db.runCommand({ping:1})"
+mongosh "mongodb://demo:demo@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true" --eval "db.runCommand({ping:1})"
 
 # 4. Install Python dependencies
 pip install -r requirements.txt
